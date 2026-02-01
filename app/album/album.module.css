@@ -230,6 +230,25 @@
     color: #666;
 }
 
+.deleteButton {
+    width: 100%;
+    padding: 1rem;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.deleteButton:hover {
+    background-color: #dc3545;
+    color: #fff;
+}
+
 @media (max-width: 640px) {
     .container {
         padding: 20px 15px;

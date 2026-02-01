@@ -179,6 +179,31 @@ export async function getLogsFromFirestore(userId: string): Promise<UserLog[]> {
     }
 }
 
+/**
+ * 特定のログを削除
+ * @param userId - ユーザーID
+ * @param logId - 削除するログのID
+ */
+export async function deleteLogFromFirestore(userId: string, logId: string): Promise<void> {
+    try {
+        const logRef = doc(getDb(), 'users', userId, 'logs', logId);
+        await deleteDoc(logRef);
+
+        // totalAdventures をデクリメント
+        const userRef = doc(getDb(), 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const currentTotal = userSnap.data().totalAdventures || 0;
+            await setDoc(userRef, {
+                totalAdventures: Math.max(0, currentTotal - 1),
+            }, { merge: true });
+        }
+    } catch (error) {
+        console.error('deleteLogFromFirestore error:', error);
+        throw new Error('ログ削除中にエラーが発生しました');
+    }
+}
+
 // ============================================================
 // アカウント削除
 // ============================================================

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserLog } from '@/lib/types';
-import { getLogsFromFirestore } from '@/lib/firestore';
-import { getErrorMessage, showErrorNotification } from '@/lib/errorHandler';
+import { getLogsFromFirestore, deleteLogFromFirestore } from '@/lib/firestore';
+import { getErrorMessage, showErrorNotification, showSuccessNotification, showConfirmModal } from '@/lib/errorHandler';
 import { getThumbnailUrl, getMediumUrl } from '@/lib/cloudinary';
 import styles from './album.module.css';
 
@@ -75,6 +75,43 @@ export default function AlbumPage() {
     const formatTime = (dateString: string | Date) => {
         const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
         return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    };
+
+    const handleDeleteLog = async (log: UserLog) => {
+        if (!userId || !log.id) {
+            showErrorNotification('削除できません（ログIDまたはユーザーIDが不明です）');
+            return;
+        }
+
+        showConfirmModal(
+            'この冒険の記録を削除しますか？\nこの操作は取り消せません。',
+            async () => {
+                try {
+                    // Firestore から削除
+                    await deleteLogFromFirestore(userId, log.id!);
+
+                    // ローカルの状態を更新
+                    const updatedLogs = logs.filter(l => l.id !== log.id);
+                    setLogs(updatedLogs);
+
+                    // localStorage も更新
+                    try {
+                        localStorage.setItem('sanposhin_logs', JSON.stringify(updatedLogs));
+                    } catch (storageError) {
+                        console.warn('localStorage の更新に失敗しました:', storageError);
+                    }
+
+                    // 詳細表示を閉じる
+                    setSelectedLog(null);
+
+                    showSuccessNotification('冒険の記録を削除しました');
+                } catch (error) {
+                    console.error('削除に失敗しました:', error);
+                    const message = getErrorMessage(error);
+                    showErrorNotification(`削除に失敗しました: ${message}`);
+                }
+            }
+        );
     };
 
     if (!userId || isLoading) {
@@ -152,6 +189,13 @@ export default function AlbumPage() {
                                 <p className={styles.detailText}>{selectedLog.memo}</p>
                             </div>
                         )}
+
+                        <button
+                            onClick={() => handleDeleteLog(selectedLog)}
+                            className={styles.deleteButton}
+                        >
+                            この記録を削除
+                        </button>
                     </div>
                 </main>
             </div>
