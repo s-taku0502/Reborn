@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserLog } from '@/lib/types';
 import { getLogsFromFirestore, deleteLogFromFirestore } from '@/lib/firestore';
 import { getErrorMessage, showErrorNotification, showSuccessNotification, showConfirmModal } from '@/lib/errorHandler';
-import { getThumbnailUrl, getMediumUrl } from '@/lib/cloudinary';
+import { getThumbnailUrl, getMediumUrl, isAllowedImageUrl } from '@/lib/cloudinary';
 import styles from './album.module.css';
 
 export default function AlbumPage() {
@@ -157,11 +157,11 @@ export default function AlbumPage() {
                             {formatDate(selectedLog.createdAt)} {formatTime(selectedLog.createdAt)}
                         </div>
 
-                        {(selectedLog.imageUrl || selectedLog.imageData) && (
+                        {((selectedLog.imageUrl && isAllowedImageUrl(selectedLog.imageUrl, userId || undefined)) || selectedLog.imageData) && (
                             <div className={styles.detailImageContainer}>
                                 <img
                                     src={
-                                        selectedLog.imageUrl
+                                        selectedLog.imageUrl && isAllowedImageUrl(selectedLog.imageUrl, userId || undefined)
                                             ? getMediumUrl(selectedLog.imageUrl)
                                             : selectedLog.imageData || ''
                                     }
@@ -227,11 +227,11 @@ export default function AlbumPage() {
                                 {formatDate(log.createdAt)}
                             </div>
 
-                            {(log.imageUrl || log.imageData) && (
+                            {((log.imageUrl && isAllowedImageUrl(log.imageUrl, userId || undefined)) || log.imageData) && (
                                 <div className={styles.logImageContainer}>
                                     <img
                                         src={
-                                            log.imageUrl
+                                            log.imageUrl && isAllowedImageUrl(log.imageUrl, userId || undefined)
                                                 ? getThumbnailUrl(log.imageUrl)
                                                 : log.imageData || ''
                                         }

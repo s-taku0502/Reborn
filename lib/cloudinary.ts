@@ -32,6 +32,30 @@ export function isCloudinaryConfigured(): boolean {
 }
 
 /**
+ * Cloudinary画像URLの許可判定
+ * - res.cloudinary.com のみ許可
+ * - cloudName が一致する場合のみ許可
+ * - userId が指定されている場合は sanposhin/{userId} 配下のみ許可
+ */
+export function isAllowedImageUrl(url: string, userId?: string): boolean {
+    try {
+        const parsed = new URL(url);
+        if (parsed.hostname !== 'res.cloudinary.com') return false;
+
+        const cloudName = cloudinaryConfig.cloudName;
+        if (!cloudName || !parsed.pathname.startsWith(`/${cloudName}/`)) return false;
+
+        if (userId) {
+            return parsed.pathname.includes(`/sanposhin/${userId}/`);
+        }
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
  * 画像を Cloudinary にアップロード
  * @param imageData - Base64画像データまたはFileオブジェクト
  * @param userId - ユーザーID（フォルダ分け用）

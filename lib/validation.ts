@@ -76,3 +76,42 @@ export function validatePassword(password: string): {
 
     return { valid: true };
 }
+
+// 任意入力の制限
+export const MAX_LOCATION_LENGTH = 50;
+export const MAX_MEMO_LENGTH = 200;
+
+/**
+ * テキスト入力のサニタイズ
+ * - 制御文字を除去
+ * - 前後の空白を削除
+ */
+export function sanitizeTextInput(input: string): string {
+    return input.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+}
+
+/**
+ * 場所入力のバリデーション（任意）
+ */
+export function validateLocation(location: string): {
+    valid: boolean;
+    error?: string;
+} {
+    if (location.length > MAX_LOCATION_LENGTH) {
+        return { valid: false, error: `場所は${MAX_LOCATION_LENGTH}文字以内で入力してください` };
+    }
+    return { valid: true };
+}
+
+/**
+ * メモ入力のバリデーション（任意）
+ */
+export function validateMemo(memo: string): {
+    valid: boolean;
+    error?: string;
+} {
+    if (memo.length > MAX_MEMO_LENGTH) {
+        return { valid: false, error: `メモは${MAX_MEMO_LENGTH}文字以内で入力してください` };
+    }
+    return { valid: true };
+}

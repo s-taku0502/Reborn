@@ -6,6 +6,7 @@ import { Mission, UserLog } from '@/lib/types';
 import { saveLogToFirestore } from '@/lib/firestore';
 import { getErrorMessage, showErrorNotification, checkImageSize } from '@/lib/errorHandler';
 import { isCloudinaryConfigured, uploadImageFile } from '@/lib/cloudinary';
+import { MAX_LOCATION_LENGTH, MAX_MEMO_LENGTH, sanitizeTextInput, validateLocation, validateMemo } from '@/lib/validation';
 import styles from './record.module.css';
 
 function RecordContent() {
@@ -71,6 +72,21 @@ function RecordContent() {
     const handleSave = async () => {
         if (!userId || !mission) return;
 
+        const sanitizedLocation = sanitizeTextInput(location);
+        const sanitizedMemo = sanitizeTextInput(memo);
+
+        const locationValidation = validateLocation(sanitizedLocation);
+        if (!locationValidation.valid) {
+            showErrorNotification(locationValidation.error!);
+            return;
+        }
+
+        const memoValidation = validateMemo(sanitizedMemo);
+        if (!memoValidation.valid) {
+            showErrorNotification(memoValidation.error!);
+            return;
+        }
+
         setIsSaving(true);
         setUploadMessage(null);
 
@@ -103,8 +119,8 @@ function RecordContent() {
                 missionId: mission.id,
                 imageUrl: finalImageUrl,
                 imageData: finalImageData,
-                location: location ? { name: location } : undefined,
-                memo: memo || undefined,
+                location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
+                memo: sanitizedMemo || undefined,
                 isPublic: false,
                 createdAt: new Date().toISOString(),
             };
@@ -195,9 +211,15 @@ function RecordContent() {
                         type="text"
                         id="location"
                         value={location}
-                        onChange={(e) => setLocation(e.target.value)}
+                        onChange={(e) => {
+                            const value = sanitizeTextInput(e.target.value);
+                            if (value.length <= MAX_LOCATION_LENGTH) {
+                                setLocation(value);
+                            }
+                        }}
                         className={styles.input}
                         placeholder="例: 公園の近く"
+                        maxLength={MAX_LOCATION_LENGTH}
                     />
                 </div>
 
@@ -208,10 +230,16 @@ function RecordContent() {
                     <textarea
                         id="memo"
                         value={memo}
-                        onChange={(e) => setMemo(e.target.value)}
+                        onChange={(e) => {
+                            const value = sanitizeTextInput(e.target.value);
+                            if (value.length <= MAX_MEMO_LENGTH) {
+                                setMemo(value);
+                            }
+                        }}
                         className={styles.textarea}
                         placeholder="気づいたこと、感じたことを..."
                         rows={4}
+                        maxLength={MAX_MEMO_LENGTH}
                     />
                 </div>
 

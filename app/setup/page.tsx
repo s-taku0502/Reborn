@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateUserId, validatePassword } from '@/lib/validation';
-import { hashPassword, savePasswordHash, verifyPassword } from '@/lib/password';
-import { checkUserIdExists, createUser, getUser, getLogsFromFirestore } from '@/lib/firestore';
+import { hashPassword, savePasswordHash } from '@/lib/password';
+import { checkUserIdExists, createUser } from '@/lib/firestore';
 import styles from './setup.module.css';
 
 export default function SetupPage() {
@@ -15,6 +15,36 @@ export default function SetupPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const LOGIN_ATTEMPT_KEY = 'sanposhin_login_attempt';
+    const MAX_LOGIN_ATTEMPTS = 5;
+    const LOCK_MINUTES = 15;
+
+    const getLoginAttempt = () => {
+        try {
+            const raw = localStorage.getItem(LOGIN_ATTEMPT_KEY);
+            if (!raw) return { failureCount: 0 };
+            return JSON.parse(raw) as { failureCount: number; lockUntil?: number; lastFailedAt?: number };
+        } catch {
+            return { failureCount: 0 };
+        }
+    };
+
+    const saveLoginAttempt = (attempt: { failureCount: number; lockUntil?: number; lastFailedAt?: number }) => {
+        try {
+            localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(attempt));
+        } catch {
+            // localStorage 失敗時は無視
+        }
+    };
+
+    const resetLoginAttempt = () => {
+        try {
+            localStorage.removeItem(LOGIN_ATTEMPT_KEY);
+        } catch {
+            // localStorage 失敗時は無視
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,6 +58,14 @@ export default function SetupPage() {
     };
 
     const handleLogin = async () => {
+        const attempt = getLoginAttempt();
+        const now = Date.now();
+        if (attempt.lockUntil && now < attempt.lockUntil) {
+            const unlockDate = new Date(attempt.lockUntil);
+            setError(`ログイン試行が多すぎます。${unlockDate.toLocaleString()} までお待ちください。`);
+            return;
+        }
+
         // バリデーション
         const userIdValidation = validateUserId(userId);
         if (!userIdValidation.valid) {
@@ -44,17 +82,51 @@ export default function SetupPage() {
         setIsLoading(true);
 
         try {
-            // 1. Firestore からユーザー情報取得
-            const user = await getUser(userId);
-            if (!user) {
-                setError('ユーザーIDまたはパスワードが間違っています');
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, password }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (response.status === 429) {
+                const retryAt = Number.isFinite(Number(data.retryAt))
+                    ? Number(data.retryAt)
+                    : now + LOCK_MINUTES * 60 * 1000;
+                saveLoginAttempt({
+                    failureCount: MAX_LOGIN_ATTEMPTS,
+                    lockUntil: retryAt,
+                    lastFailedAt: now,
+                });
+                const unlockDate = new Date(retryAt);
+                setError(`ログイン試行が多すぎます。${unlockDate.toLocaleString()} までお待ちください。`);
                 setIsLoading(false);
                 return;
             }
 
-            // 2. パスワード検証
-            const isValid = await verifyPassword(password, user.passwordHash);
-            if (!isValid) {
+            if (response.status >= 500 || data.code === 'SERVER_ERROR') {
+                setError('サーバー側ログインに失敗しました。しばらくしてから再度お試しください。');
+                setIsLoading(false);
+                return;
+            }
+
+            if (data.code === 'INVALID_INPUT') {
+                setError('入力内容を確認してください');
+                setIsLoading(false);
+                return;
+            }
+
+            if (!response.ok || !data.ok) {
+                const newAttempt = {
+                    failureCount: (attempt.failureCount || 0) + 1,
+                    lastFailedAt: now,
+                };
+                if (newAttempt.failureCount >= MAX_LOGIN_ATTEMPTS) {
+                    newAttempt.failureCount = MAX_LOGIN_ATTEMPTS;
+                    newAttempt.lockUntil = now + LOCK_MINUTES * 60 * 1000;
+                }
+                saveLoginAttempt(newAttempt);
                 setError('ユーザーIDまたはパスワードが間違っています');
                 setIsLoading(false);
                 return;
@@ -64,14 +136,13 @@ export default function SetupPage() {
             await savePasswordHash(password);
             localStorage.setItem('sanposhin_userId', userId);
 
-            // 4. Firestore からログを取得して localStorage にキャッシュ
-            try {
-                const logs = await getLogsFromFirestore(userId);
-                localStorage.setItem('sanposhin_logs', JSON.stringify(logs));
-                console.log(`ログイン成功: ${logs.length}件のログを取得しました`);
-            } catch (logError) {
-                console.warn('ログ取得に失敗しましたが、ログインは継続します:', logError);
-            }
+            // ログイン試行回数をリセット
+            resetLoginAttempt();
+
+            // 4. サーバーからログを受け取り localStorage にキャッシュ
+            const logs = Array.isArray(data.logs) ? data.logs : [];
+            localStorage.setItem('sanposhin_logs', JSON.stringify(logs));
+            console.log(`ログイン成功: ${logs.length}件のログを取得しました`);
 
             // 5. ホームへリダイレクト
             router.push('/');
