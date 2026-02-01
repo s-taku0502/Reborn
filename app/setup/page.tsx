@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateUserId, validatePassword } from '@/lib/validation';
-import { hashPassword, savePasswordHash } from '@/lib/password';
-import { checkUserIdExists, createUser } from '@/lib/firestore';
+import { hashPassword, savePasswordHash, verifyPassword } from '@/lib/password';
+import { checkUserIdExists, createUser, getUser, getLogsFromFirestore } from '@/lib/firestore';
 import styles from './setup.module.css';
 
 export default function SetupPage() {
     const router = useRouter();
+    const [mode, setMode] = useState<'signup' | 'login'>('signup');
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,7 +20,70 @@ export default function SetupPage() {
         e.preventDefault();
         setError('');
 
+        if (mode === 'login') {
+            await handleLogin();
+        } else {
+            await handleSignup();
+        }
+    };
+
+    const handleLogin = async () => {
         // バリデーション
+        const userIdValidation = validateUserId(userId);
+        if (!userIdValidation.valid) {
+            setError(userIdValidation.error!);
+            return;
+        }
+
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
+            setError(passwordValidation.error!);
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // 1. Firestore からユーザー情報取得
+            const user = await getUser(userId);
+            if (!user) {
+                setError('ユーザーIDまたはパスワードが間違っています');
+                setIsLoading(false);
+                return;
+            }
+
+            // 2. パスワード検証
+            const isValid = await verifyPassword(password, user.passwordHash);
+            if (!isValid) {
+                setError('ユーザーIDまたはパスワードが間違っています');
+                setIsLoading(false);
+                return;
+            }
+
+            // 3. localStorage に保存
+            await savePasswordHash(password);
+            localStorage.setItem('sanposhin_userId', userId);
+
+            // 4. Firestore からログを取得して localStorage にキャッシュ
+            try {
+                const logs = await getLogsFromFirestore(userId);
+                localStorage.setItem('sanposhin_logs', JSON.stringify(logs));
+                console.log(`ログイン成功: ${logs.length}件のログを取得しました`);
+            } catch (logError) {
+                console.warn('ログ取得に失敗しましたが、ログインは継続します:', logError);
+            }
+
+            // 5. ホームへリダイレクト
+            router.push('/');
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('ログイン中にエラーが発生しました');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSignup = async () => {
         const userIdValidation = validateUserId(userId);
         if (!userIdValidation.valid) {
             setError(userIdValidation.error!);
@@ -77,10 +141,16 @@ export default function SetupPage() {
     return (
         <div className={styles.container}>
             <main className={styles.main}>
-                <h1 className={styles.title}>初期設定</h1>
+                <h1 className={styles.title}>{mode === 'signup' ? '初期設定' : 'ログイン'}</h1>
                 <p className={styles.description}>
-                    散歩神を始めるために、<br />
-                    ユーザーIDとバックアップ用パスワードを設定してください。
+                    {mode === 'signup' ? (
+                        <>
+                            散歩神を始めるために、<br />
+                            ユーザーIDとバックアップ用パスワードを設定してください。
+                        </>
+                    ) : (
+                        'ユーザーIDとパスワードでログインしてください。'
+                    )}
                 </p>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
@@ -121,23 +191,25 @@ export default function SetupPage() {
                         />
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label htmlFor="confirmPassword" className={styles.label}>
-                            パスワード（確認）
-                        </label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className={styles.input}
-                            placeholder="1234567"
-                            maxLength={7}
-                            inputMode="numeric"
-                            autoComplete="off"
-                            disabled={isLoading}
-                        />
-                    </div>
+                    {mode === 'signup' && (
+                        <div className={styles.formGroup}>
+                            <label htmlFor="confirmPassword" className={styles.label}>
+                                パスワード（確認）
+                            </label>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className={styles.input}
+                                placeholder="1234567"
+                                maxLength={7}
+                                inputMode="numeric"
+                                autoComplete="off"
+                                disabled={isLoading}
+                            />
+                        </div>
+                    )}
 
                     {error && <p className={styles.error}>{error}</p>}
 
@@ -146,14 +218,33 @@ export default function SetupPage() {
                         className={styles.submitButton}
                         disabled={isLoading}
                     >
-                        {isLoading ? '設定中...' : '設定を完了する'}
+                        {isLoading ? (
+                            mode === 'signup' ? '設定中...' : 'ログイン中...'
+                        ) : (
+                            mode === 'signup' ? '設定を完了する' : 'ログインする'
+                        )}
                     </button>
                 </form>
 
-                <p className={styles.note}>
-                    ※ 一度設定したIDは変更できません<br />
-                    ※ パスワードは端末移行時に必要になります
-                </p>
+                <button
+                    onClick={() => {
+                        setMode(mode === 'signup' ? 'login' : 'signup');
+                        setError('');
+                        setPassword('');
+                        setConfirmPassword('');
+                    }}
+                    className={styles.toggleButton}
+                    disabled={isLoading}
+                >
+                    {mode === 'signup' ? '既にアカウントをお持ちの方はこちら' : '新規登録はこちら'}
+                </button>
+
+                {mode === 'signup' && (
+                    <p className={styles.note}>
+                        ※ 一度設定したIDは変更できません<br />
+                        ※ パスワードは端末移行時に必要になります
+                    </p>
+                )}
             </main>
         </div>
     );

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mission, UserLog } from '@/lib/types';
 import { saveLogToFirestore } from '@/lib/firestore';
-import { getErrorMessage, showErrorNotification, showSuccessNotification, checkImageSize } from '@/lib/errorHandler';
+import { getErrorMessage, showErrorNotification, checkImageSize } from '@/lib/errorHandler';
 import { isCloudinaryConfigured, uploadImageFile } from '@/lib/cloudinary';
 import styles from './record.module.css';
 
@@ -19,6 +19,7 @@ function RecordContent() {
     const [memo, setMemo] = useState('');
     const [location, setLocation] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
     useEffect(() => {
         // ユーザーIDチェック
@@ -71,6 +72,7 @@ function RecordContent() {
         if (!userId || !mission) return;
 
         setIsSaving(true);
+        setUploadMessage(null);
 
         try {
             let finalImageUrl: string | undefined;
@@ -79,13 +81,13 @@ function RecordContent() {
             // Cloudinary が設定されている場合はアップロード
             if (imageFile && isCloudinaryConfigured()) {
                 try {
-                    showSuccessNotification('画像をアップロード中...');
+                    setUploadMessage('画像をアップロード中...');
                     finalImageUrl = await uploadImageFile(imageFile, userId);
-                    showSuccessNotification('画像アップロード完了');
+                    setUploadMessage('画像アップロード完了');
                     // Cloudinary にアップロード成功した場合は Base64 を保存しない
                 } catch (uploadError) {
                     console.error('Cloudinary upload failed:', uploadError);
-                    showErrorNotification('画像アップロードに失敗しました。Base64で保存します。');
+                    setUploadMessage('画像アップロードに失敗しました。Base64で保存します。');
                     // フォールバック: Base64 データを保存
                     finalImageData = imageData || undefined;
                 }
@@ -121,7 +123,7 @@ function RecordContent() {
                 // Firestore への保存は成功しているので続行
             }
 
-            showSuccessNotification('記録を保存しました');
+            setUploadMessage('記録を保存しました');
 
             // 成功画面へ遷移
             router.push('/record/success');
@@ -212,6 +214,10 @@ function RecordContent() {
                         rows={4}
                     />
                 </div>
+
+                {uploadMessage && (
+                    <div className={styles.noticeMessage}>{uploadMessage}</div>
+                )}
 
                 <button
                     onClick={handleSave}

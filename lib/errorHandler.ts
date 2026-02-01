@@ -118,21 +118,261 @@ export function checkImageSize(file: File, maxSizeMB: number = 5): string | null
 }
 
 /**
- * エラー通知表示（アラート）
+ * エラー通知表示（モーダル）
  * @param message - 表示するメッセージ
  */
 export function showErrorNotification(message: string): void {
     if (typeof window !== 'undefined') {
-        alert(message);
+        showModal(message, 'error');
     }
 }
 
 /**
- * 成功通知表示（アラート）
+ * 成功通知表示（モーダル）
  * @param message - 表示するメッセージ
  */
 export function showSuccessNotification(message: string): void {
     if (typeof window !== 'undefined') {
-        alert(message);
+        showModal(message, 'success');
     }
+}
+
+/**
+ * 確認ダイアログ表示（モーダル）
+ * @param message - 表示するメッセージ
+ * @param onConfirm - OKボタン押下時のコールバック
+ */
+export function showConfirmModal(message: string, onConfirm: () => void): void {
+    if (typeof window !== 'undefined') {
+        showConfirmModalInternal(message, onConfirm);
+    }
+}
+
+/**
+ * 確認モーダル表示（画面中央、OK/キャンセル付き）
+ */
+function showConfirmModalInternal(message: string, onConfirm: () => void): void {
+    // 既存のモーダルを削除
+    const existingModal = document.getElementById('sanposhin-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // モーダル作成
+    const overlay = document.createElement('div');
+    overlay.id = 'sanposhin-modal';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 4px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+    `;
+
+    const messageEl = document.createElement('p');
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+        margin: 0 0 1.5rem 0;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #333;
+        text-align: center;
+        white-space: pre-wrap;
+    `;
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 0.5rem;
+    `;
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'キャンセル';
+    cancelButton.style.cssText = `
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #f5f5f5;
+        color: #666;
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    `;
+    cancelButton.onmouseover = () => {
+        cancelButton.style.background = '#e0e0e0';
+        cancelButton.style.borderColor = '#999';
+    };
+    cancelButton.onmouseout = () => {
+        cancelButton.style.background = '#f5f5f5';
+        cancelButton.style.borderColor = '#ddd';
+    };
+    cancelButton.onclick = () => overlay.remove();
+
+    const confirmButton = document.createElement('button');
+    confirmButton.textContent = 'OK';
+    confirmButton.style.cssText = `
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    `;
+    confirmButton.onmouseover = () => confirmButton.style.background = '#555';
+    confirmButton.onmouseout = () => confirmButton.style.background = '#333';
+    confirmButton.onclick = () => {
+        overlay.remove();
+        onConfirm();
+    };
+
+    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(confirmButton);
+
+    modal.appendChild(messageEl);
+    modal.appendChild(buttonContainer);
+    overlay.appendChild(modal);
+
+    // アニメーション追加
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(overlay);
+
+    // Escapeキーで閉じる
+    const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            overlay.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+
+/**
+ * モーダル表示（画面中央）
+ * @param message - 表示するメッセージ
+ * @param type - 'error' | 'success' | 'info'
+ */
+function showModal(message: string, type: 'error' | 'success' | 'info' = 'info'): void {
+    // 既存のモーダルを削除
+    const existingModal = document.getElementById('sanposhin-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // モーダル作成
+    const overlay = document.createElement('div');
+    overlay.id = 'sanposhin-modal';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 4px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+    `;
+
+    const messageEl = document.createElement('p');
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+        margin: 0 0 1.5rem 0;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: ${type === 'error' ? '#d32f2f' : type === 'success' ? '#388e3c' : '#333'};
+        text-align: center;
+    `;
+
+    const button = document.createElement('button');
+    button.textContent = 'OK';
+    button.style.cssText = `
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    `;
+    button.onmouseover = () => button.style.background = '#555';
+    button.onmouseout = () => button.style.background = '#333';
+    button.onclick = () => overlay.remove();
+
+    modal.appendChild(messageEl);
+    modal.appendChild(button);
+    overlay.appendChild(modal);
+
+    // アニメーション追加
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(overlay);
+
+    // Escapeキーで閉じる
+    const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            overlay.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
 }

@@ -24,10 +24,17 @@ export default function OraclePage() {
         setUserId(storedUserId);
 
         // ランダムにお告げを選択
+        generateNewMission();
+    }, [router]);
+
+    const generateNewMission = () => {
         const missions = missionsData.missions as Mission[];
         const randomIndex = Math.floor(Math.random() * missions.length);
         setCurrentMission(missions[randomIndex]);
-    }, [router]);
+        setIsStarted(false);
+        setStartTime(null);
+        setElapsedMinutes(0);
+    };
 
     useEffect(() => {
         // 経過時間の計測
@@ -79,7 +86,7 @@ export default function OraclePage() {
                     </button>
 
                     <button
-                        onClick={() => router.push('/')}
+                        onClick={generateNewMission}
                         className={styles.secondaryButton}
                     >
                         別のお告げを受ける

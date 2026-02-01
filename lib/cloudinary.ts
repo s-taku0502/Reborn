@@ -58,6 +58,8 @@ export async function uploadToCloudinary(
     formData.append('folder', `sanposhin/${userId}`);
     formData.append('timestamp', Date.now().toString());
 
+    console.log('Cloudinary upload folder:', `sanposhin/${userId}`);
+
     const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
         {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { resetPassword } from '@/lib/password';
 import { verifyPassword } from '@/lib/password';
 import { deleteUserAccount, createBackupData, restoreLogsToFirestore } from '@/lib/firestore';
-import { getErrorMessage, showErrorNotification, showSuccessNotification } from '@/lib/errorHandler';
+import { getErrorMessage, showErrorNotification, showSuccessNotification, showConfirmModal } from '@/lib/errorHandler';
 import styles from './mypage.module.css';
 
 // 復元試行管理用の型定義
@@ -198,7 +198,7 @@ export default function MyPage() {
             setPasswordResetError('');
             setCurrentPassword('');
             setShowPasswordReset(false);
-            alert(
+            showSuccessNotification(
                 `パスワードが再設定されました。\n\n新しいパスワード: ${newPassword}\n\n※ 必ず控えてください。\n※ このメッセージを閉じた後に新パスワードは表示されません。`
             );
         } else {
@@ -207,10 +207,13 @@ export default function MyPage() {
     };
 
     const handleLogout = () => {
-        if (confirm('ログアウトしますか？\n必ずバックアップを取得してください。')) {
-            localStorage.clear();
-            router.push('/setup');
-        }
+        showConfirmModal(
+            'ログアウトしますか？\n必ずバックアップを取得してください。',
+            () => {
+                localStorage.clear();
+                router.push('/setup');
+            }
+        );
     };
 
     const handleDeleteAccount = async () => {
