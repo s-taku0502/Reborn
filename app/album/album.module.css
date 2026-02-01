@@ -1,0 +1,247 @@
+.container {
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: #fafafa;
+}
+
+.main {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.loading {
+    text-align: center;
+    font-size: 1rem;
+    color: #999;
+    padding: 2rem;
+}
+
+.headerContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header {
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: #333;
+}
+
+.homeButton {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.homeButton:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+    color: #333;
+}
+
+.stats {
+    background: #fff;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.statsText {
+    font-size: 0.95rem;
+    color: #666;
+    letter-spacing: 0.05em;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.emptyMessage {
+    font-size: 1rem;
+    color: #999;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+}
+
+.primaryButton {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primaryButton:hover {
+    background-color: #555;
+}
+
+.logList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.logCard {
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.logCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.logDate {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    color: #999;
+    background-color: #fafafa;
+    letter-spacing: 0.05em;
+}
+
+.logImageContainer {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+.logImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.logContent {
+    padding: 1rem;
+}
+
+.logMission {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.03em;
+}
+
+.logLocation {
+    font-size: 0.85rem;
+    color: #999;
+    margin-top: 0.5rem;
+}
+
+.backButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.backButton:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+    color: #333;
+}
+
+.detailCard {
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.detailDate {
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    color: #999;
+    background-color: #fafafa;
+    letter-spacing: 0.05em;
+}
+
+.detailImageContainer {
+    width: 100%;
+    max-height: 500px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+.detailImage {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.detailMission {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detailLabel {
+    display: block;
+    font-size: 0.8rem;
+    color: #999;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.detailMissionText {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+    letter-spacing: 0.05em;
+}
+
+.detailInfo {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detailInfo:last-child {
+    border-bottom: none;
+}
+
+.detailText {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #666;
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 20px 15px;
+    }
+
+    .logList {
+        grid-template-columns: 1fr;
+    }
+
+    .headerContainer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}

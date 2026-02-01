@@ -1,0 +1,203 @@
+.container {
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: #fafafa;
+}
+
+.main {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.loading {
+    text-align: center;
+    font-size: 1rem;
+    color: #999;
+    padding: 2rem;
+}
+
+.header {
+    font-size: 1.5rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #333;
+}
+
+.missionBox {
+    background: #f5f5f5;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+    border-left: 3px solid #333;
+}
+
+.missionText {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #666;
+    letter-spacing: 0.05em;
+}
+
+.formGroup {
+    margin-bottom: 2rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: #333;
+    letter-spacing: 0.05em;
+}
+
+.imageInputContainer {
+    width: 100%;
+}
+
+.imageInput {
+    display: none;
+}
+
+.imageInputLabel {
+    display: block;
+    cursor: pointer;
+}
+
+.imageInputPlaceholder {
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #999;
+    transition: all 0.3s ease;
+}
+
+.imageInputPlaceholder:hover {
+    border-color: #333;
+    color: #333;
+}
+
+.imagePreview {
+    position: relative;
+    width: 100%;
+}
+
+.previewImage {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+}
+
+.imageChangeButton {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    background-color: #f5f5f5;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.imageChangeButton:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
+}
+
+.input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    background-color: #fff;
+    resize: vertical;
+    line-height: 1.6;
+    transition: all 0.2s ease;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.primaryButton {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.primaryButton:hover:not(:disabled) {
+    background-color: #555;
+}
+
+.primaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.secondaryButton {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    background-color: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.75rem;
+}
+
+.secondaryButton:hover:not(:disabled) {
+    background-color: #f5f5f5;
+    border-color: #999;
+    color: #333;
+}
+
+.secondaryButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 20px 15px;
+    }
+}

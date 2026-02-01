@@ -1,17 +1,51 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styles from './page.module.css';
+
 export default function Home() {
-  return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      minHeight: '100vh',
-      padding: '20px'
-    }}>
-      <main>
-        <h1>Sanposhin Reborn へようこそ</h1>
-        <p>Next.js 15 で構築されたアプリケーションです。</p>
-      </main>
-    </div>
-  );
+    const router = useRouter();
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        // ローカルストレージからユーザーIDを取得
+        const storedUserId = localStorage.getItem('sanposhin_userId');
+        setUserId(storedUserId);
+    }, []);
+
+    const handleStart = () => {
+        if (userId) {
+            router.push('/oracle');
+        } else {
+            router.push('/setup');
+        }
+    };
+
+    return (
+        <div className={styles.container}>
+            <main className={styles.main}>
+                <h1 className={styles.title}>散歩神</h1>
+                <p className={styles.subtitle}>今日の散歩に、</p>
+                <p className={styles.subtitle}>小さな意味を。</p>
+
+                <div className={styles.buttonContainer}>
+                    <button onClick={handleStart} className={styles.primaryButton}>
+                        {userId ? 'お告げを受ける' : '始める'}
+                    </button>
+                </div>
+
+                {userId && (
+                    <nav className={styles.nav}>
+                        <button onClick={() => router.push('/album')} className={styles.navButton}>
+                            冒険の書
+                        </button>
+                        <button onClick={() => router.push('/mypage')} className={styles.navButton}>
+                            マイページ
+                        </button>
+                    </nav>
+                )}
+            </main>
+        </div>
+    );
 }

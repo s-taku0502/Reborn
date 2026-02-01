@@ -1,0 +1,124 @@
+{
+    "missions": [
+        {
+            "id": "fb_anytime_001",
+            "text": "今日は目的を決めず、気になった道を1本だけ選んでみよ",
+            "category": "move",
+            "difficulty": 1,
+            "source": "fallback",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "fb_anytime_002",
+            "text": "足元の感触を、少しだけ意識してみよ",
+            "category": "observe",
+            "difficulty": 1,
+            "source": "fallback",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "observe_city_001",
+            "text": "今、いちばん大きく聞こえる音は何だろう",
+            "category": "observe",
+            "difficulty": 1,
+            "source": "master",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "observe_city_002",
+            "text": "空の色を一度だけ見上げてみよ",
+            "category": "photo",
+            "difficulty": 1,
+            "source": "master",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "mood_short_001",
+            "text": "最近、考えすぎていることはある？",
+            "category": "action",
+            "difficulty": 2,
+            "source": "master",
+            "tags": [
+                "short",
+                "introspective"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "mood_short_002",
+            "text": "今の気分に近い色を探してみよ",
+            "category": "photo",
+            "difficulty": 1,
+            "source": "master",
+            "tags": [
+                "short",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "safe_anytime_001",
+            "text": "曲がり角で、直感に任せてみよ",
+            "category": "move",
+            "difficulty": 2,
+            "source": "master",
+            "tags": [
+                "anytime",
+                "playful"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "safe_anytime_002",
+            "text": "3歩だけ、ゆっくり歩いてみよ",
+            "category": "action",
+            "difficulty": 1,
+            "source": "master",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "observe_detail_001",
+            "text": "今日見つけた小さな変化を1つ記録してみよ",
+            "category": "photo",
+            "difficulty": 1,
+            "source": "master",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        },
+        {
+            "id": "fb_anytime_003",
+            "text": "今日は、何も決めなくていい",
+            "category": "move",
+            "difficulty": 1,
+            "source": "fallback",
+            "tags": [
+                "anytime",
+                "safe"
+            ],
+            "risk_level": "low"
+        }
+    ]
+}

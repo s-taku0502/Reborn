@@ -1,7 +1,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    reactStrictMode: true,
+    // PWA設定（next-pwaの代わりにシンプルな設定）
+    webpack: (config) => {
+        return config;
+    },
 };
 
 export default nextConfig;

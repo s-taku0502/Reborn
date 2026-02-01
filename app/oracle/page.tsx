@@ -1,0 +1,112 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import missionsData from '@/data/missions.json';
+import { Mission } from '@/lib/types';
+import styles from './oracle.module.css';
+
+export default function OraclePage() {
+    const router = useRouter();
+    const [userId, setUserId] = useState<string | null>(null);
+    const [currentMission, setCurrentMission] = useState<Mission | null>(null);
+    const [isStarted, setIsStarted] = useState(false);
+    const [startTime, setStartTime] = useState<Date | null>(null);
+    const [elapsedMinutes, setElapsedMinutes] = useState(0);
+
+    useEffect(() => {
+        // ユーザーIDチェック
+        const storedUserId = localStorage.getItem('sanposhin_userId');
+        if (!storedUserId) {
+            router.push('/setup');
+            return;
+        }
+        setUserId(storedUserId);
+
+        // ランダムにお告げを選択
+        const missions = missionsData.missions as Mission[];
+        const randomIndex = Math.floor(Math.random() * missions.length);
+        setCurrentMission(missions[randomIndex]);
+    }, [router]);
+
+    useEffect(() => {
+        // 経過時間の計測
+        if (isStarted && startTime) {
+            const interval = setInterval(() => {
+                const now = new Date();
+                const diff = now.getTime() - startTime.getTime();
+                const minutes = Math.floor(diff / 60000);
+                setElapsedMinutes(minutes);
+            }, 1000);
+
+            return () => clearInterval(interval);
+        }
+    }, [isStarted, startTime]);
+
+    const handleStart = () => {
+        setIsStarted(true);
+        setStartTime(new Date());
+    };
+
+    const handleRecord = () => {
+        if (currentMission) {
+            // お告げ情報を渡して記録ページへ
+            const missionData = encodeURIComponent(JSON.stringify(currentMission));
+            router.push(`/record?mission=${missionData}&startTime=${startTime?.toISOString()}`);
+        }
+    };
+
+    if (!currentMission || !userId) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.loading}>読み込み中...</div>
+            </div>
+        );
+    }
+
+    if (!isStarted) {
+        return (
+            <div className={styles.container}>
+                <main className={styles.main}>
+                    <h1 className={styles.header}>今日のお告げ</h1>
+
+                    <div className={styles.oracleBox}>
+                        <p className={styles.oracleText}>{currentMission.text}</p>
+                    </div>
+
+                    <button onClick={handleStart} className={styles.primaryButton}>
+                        行動を始める
+                    </button>
+
+                    <button
+                        onClick={() => router.push('/')}
+                        className={styles.secondaryButton}
+                    >
+                        別のお告げを受ける
+                    </button>
+                </main>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.container}>
+            <main className={styles.main}>
+                <p className={styles.statusLabel}>（行動中）</p>
+
+                <div className={styles.oracleBox}>
+                    <p className={styles.oracleText}>{currentMission.text}</p>
+                </div>
+
+                <div className={styles.timeBox}>
+                    <p className={styles.timeLabel}>経過時間</p>
+                    <p className={styles.timeValue}>{elapsedMinutes}分</p>
+                </div>
+
+                <button onClick={handleRecord} className={styles.primaryButton}>
+                    記録する
+                </button>
+            </main>
+        </div>
+    );
+}
