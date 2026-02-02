@@ -1,6 +1,14 @@
+# Robots.txt for 散歩神 Reborn
+# 本ファイルは検索エンジンのクロール方針を定義します
+
 User-agent: *
 Allow: /
+
+# API エンドポイントはクロール対象外
 Disallow: /api/
+
+# Next.js ビルド生成物（実装詳細）
 Disallow: /_next/
 
+# サイトマップ
 Sitemap: /sitemap.xml
