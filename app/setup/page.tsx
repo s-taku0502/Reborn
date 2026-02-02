@@ -117,7 +117,7 @@ export default function SetupPage() {
             }
 
             if (!response.ok || !data.ok) {
-                const newAttempt = {
+                const newAttempt: { failureCount: number; lastFailedAt: number; lockUntil?: number } = {
                     failureCount: (attempt.failureCount || 0) + 1,
                     lastFailedAt: now,
                 };

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { getRandomFallbackMission } from '@/data/fallbackMissions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const AI_PROVIDER_API_KEY = process.env.AI_PROVIDER_API_KEY;
+// Gemini API Key - 環境変数 GEMINI_API_KEY または AI_PROVIDER_API_KEY から取得
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.AI_PROVIDER_API_KEY;
 
 const SYSTEM_PROMPT = `あなたは「散歩神」という散歩アプリの神様です。
 ユーザーに散歩のお題（ミッション）を与える役割を持っています。
@@ -15,6 +17,7 @@ const SYSTEM_PROMPT = `あなたは「散歩神」という散歩アプリの神
 3. カテゴリ: "observe"(観察), "move"(移動), "mood"(気分)のいずれか
 4. 難易度: 1-5（1=誰でも簡単、5=挑戦的）
 5. ポジティブ: 楽しく、前向きな体験になるもの
+6. 写真撮影: ユーザーはカメラでお題に沿っていると思う写真を撮る必要があることを考慮すること
 
 ## 出力形式（JSON）:
 {
@@ -36,16 +39,9 @@ const SYSTEM_PROMPT = `あなたは「散歩神」という散歩アプリの神
 - 危険な場所に行く（安全性）
 - 長時間かかるもの（散歩の範囲を超える）`;
 
-const FALLBACK_MISSIONS = [
-    { text: '空を見上げて雲の形を観察する', category: 'observe', difficulty: 1 },
-    { text: 'いつもと違う道を1本選んで歩く', category: 'move', difficulty: 2 },
-    { text: '深呼吸を3回して、今の気分を確かめる', category: 'mood', difficulty: 1 },
-    { text: '道端の花や植物を1つ見つける', category: 'observe', difficulty: 1 },
-    { text: '5分間、音楽を聴かずに歩く', category: 'mood', difficulty: 2 },
-];
-
 function getRandomFallback() {
-    const mission = FALLBACK_MISSIONS[Math.floor(Math.random() * FALLBACK_MISSIONS.length)];
+    const mission = getRandomFallbackMission();
+    console.log('[AI Mission] 🔄 Using FALLBACK mission:', mission.text);
     return {
         id: `fallback_${Date.now()}`,
         ...mission,
@@ -61,15 +57,21 @@ export async function POST(req: NextRequest) {
         const timeOfDay = context.timeOfDay || 'day';
         const weather = context.weather || 'clear';
 
+        // デバッグ情報
+        console.log('[AI Mission] API Key exists:', !!GEMINI_API_KEY);
+        console.log('[AI Mission] API Key prefix:', GEMINI_API_KEY?.substring(0, 10) + '...');
+
         // AI未設定の場合はフォールバック
-        if (!AI_PROVIDER_API_KEY) {
-            console.warn('AI_PROVIDER_API_KEY not set, using fallback');
+        if (!GEMINI_API_KEY) {
+            console.warn('[AI Mission] GEMINI_API_KEY not set, using fallback');
             return NextResponse.json(getRandomFallback());
         }
 
-        // Gemini API を使用してミッション生成
+        console.log('[AI Mission] Attempting Gemini API call...');
+
+        // Gemini API クライアント初期化（環境変数から自動取得）
         const ai = new GoogleGenAI({
-            apiKey: AI_PROVIDER_API_KEY,
+            apiKey: GEMINI_API_KEY,
         });
 
         const userPrompt = `現在の状況:
@@ -80,16 +82,19 @@ export async function POST(req: NextRequest) {
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
-            contents: userPrompt,
-            systemInstruction: SYSTEM_PROMPT,
+            contents: `${SYSTEM_PROMPT}\n\n${userPrompt}`,
         });
 
-        const content = response.text();
+        console.log('[AI Mission] Gemini API response received');
+
+        const content = response.text;
 
         if (!content) {
-            console.warn('Empty response from Gemini');
+            console.warn('[AI Mission] Empty response from Gemini');
             return NextResponse.json(getRandomFallback());
         }
+
+        console.log('[AI Mission] Response content:', content);
 
         // JSON 抽出（Gemini がマークダウンでラップすることがあるため）
         let jsonStr = content;
@@ -102,6 +107,7 @@ export async function POST(req: NextRequest) {
 
         // バリデーション
         if (!missionData.text || !missionData.category || !missionData.difficulty) {
+            console.warn('[AI Mission] Invalid mission data:', missionData);
             return NextResponse.json(getRandomFallback());
         }
 
@@ -109,16 +115,23 @@ export async function POST(req: NextRequest) {
             missionData.text = missionData.text.substring(0, 50);
         }
 
-        return NextResponse.json({
+        console.log('[AI Mission] Successfully generated AI mission');
+
+        const aiMission = {
             id: `ai_${Date.now()}`,
             text: missionData.text,
             category: missionData.category,
             difficulty: Number(missionData.difficulty) || 2,
             source: 'ai',
             reason: missionData.reason || 'AI生成',
-        });
+        };
+
+        console.log('[AI Mission] ✨ AI Generated mission:', aiMission.text);
+
+        return NextResponse.json(aiMission);
     } catch (error) {
-        console.error('Generate mission API error:', error);
-        return NextResponse.json(getRandomFallback());
+        console.error('[AI Mission] ❌ Generate mission API error:', error);
+        const fallback = getRandomFallback();
+        return NextResponse.json(fallback);
     }
 }
