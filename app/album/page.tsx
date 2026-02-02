@@ -155,6 +155,7 @@ export default function AlbumPage() {
                     <div className={styles.detailCard}>
                         <div className={styles.detailDate}>
                             {formatDate(selectedLog.createdAt)} {formatTime(selectedLog.createdAt)}
+                            {selectedLog.status === 'cancelled' && <span className={styles.cancelledBadge}>キャンセル</span>}
                         </div>
 
                         {((selectedLog.imageUrl && isAllowedImageUrl(selectedLog.imageUrl, userId || undefined)) || selectedLog.imageData) && (
@@ -213,7 +214,14 @@ export default function AlbumPage() {
                 </div>
 
                 <div className={styles.stats}>
-                    <p className={styles.statsText}>総冒険数: {logs.length}回</p>
+                    <p className={styles.statsText}>
+                        総冒険数: {logs.filter(log => log.status !== 'cancelled').length}回
+                        {logs.filter(log => log.status === 'cancelled').length > 0 && (
+                            <span style={{ marginLeft: '1rem', color: '#999', fontSize: '0.9em' }}>
+                                (キャンセル: {logs.filter(log => log.status === 'cancelled').length}回)
+                            </span>
+                        )}
+                    </p>
                 </div>
 
                 <div className={styles.logList}>
@@ -221,10 +229,11 @@ export default function AlbumPage() {
                         <div
                             key={index}
                             onClick={() => setSelectedLog(log)}
-                            className={styles.logCard}
+                            className={`${styles.logCard} ${log.status === 'cancelled' ? styles.logCardCancelled : ''}`}
                         >
                             <div className={styles.logDate}>
                                 {formatDate(log.createdAt)}
+                                {log.status === 'cancelled' && <span className={styles.cancelledBadge}>キャンセル</span>}
                             </div>
 
                             {((log.imageUrl && isAllowedImageUrl(log.imageUrl, userId || undefined)) || log.imageData) && (

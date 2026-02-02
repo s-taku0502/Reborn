@@ -24,6 +24,7 @@ export interface UserLog {
     };
     memo?: string;
     isPublic: boolean;
+    status?: 'completed' | 'cancelled'; // ミッションのステータス（完了 or キャンセル）
     createdAt: Date | string;
 }
 

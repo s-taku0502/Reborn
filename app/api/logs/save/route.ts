@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
         const locationName = body?.location?.name ? sanitizeTextInput(String(body.location.name)) : undefined;
         const memo = body?.memo ? sanitizeTextInput(String(body.memo)) : undefined;
         const isPublic = Boolean(body?.isPublic);
+        const status = body?.status === 'cancelled' ? 'cancelled' : 'completed'; // ステータス追加
 
         if (!userId || !missionId || !missionText) {
             return NextResponse.json(
@@ -120,17 +121,20 @@ export async function POST(req: NextRequest) {
             location: locationName ? { name: locationName } : undefined,
             memo,
             isPublic,
+            status, // ステータスを追加
             createdAt: new Date().toISOString(),
         };
 
         const cleanedLog = removeUndefined(logData);
         const docRef = await logsRef.add(cleanedLog);
 
-        // totalAdventures をインクリメント
-        const userSnap = await userRef.get();
-        if (userSnap.exists) {
-            const currentTotal = (userSnap.data()?.totalAdventures as number) || 0;
-            await userRef.set({ totalAdventures: currentTotal + 1 }, { merge: true });
+        // totalAdventures をインクリメント（完了したミッションのみカウント）
+        if (status === 'completed') {
+            const userSnap = await userRef.get();
+            if (userSnap.exists) {
+                const currentTotal = (userSnap.data()?.totalAdventures as number) || 0;
+                await userRef.set({ totalAdventures: currentTotal + 1 }, { merge: true });
+            }
         }
 
         return NextResponse.json({ ok: true, logId: docRef.id });

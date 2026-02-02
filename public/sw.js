@@ -43,9 +43,28 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
+// キャッシュ可能なリクエストかチェック
+function isCacheable(request) {
+    // GET のみキャッシュ対象
+    if (request.method !== 'GET') return false;
+    
+    // chrome-extension スキームはキャッシュ不可
+    if (request.url.startsWith('chrome-extension://')) return false;
+    
+    // file スキームはキャッシュ不可
+    if (request.url.startsWith('file://')) return false;
+    
+    return true;
+}
+
 // フェッチイベント（ネットワーク優先、フォールバックでキャッシュ）
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+
+    // キャッシュできないリクエストはスキップ
+    if (!isCacheable(request)) {
+        return;
+    }
 
     // 画像は Cache First 戦略
     if (request.destination === 'image') {
@@ -55,10 +74,15 @@ self.addEventListener('fetch', (event) => {
                     return cachedResponse;
                 }
                 return fetch(request).then((response) => {
-                    return caches.open(RUNTIME_CACHE).then((cache) => {
-                        cache.put(request, response.clone());
-                        return response;
-                    });
+                    if (response.status === 200) {
+                        return caches.open(RUNTIME_CACHE).then((cache) => {
+                            cache.put(request, response.clone());
+                            return response;
+                        });
+                    }
+                    return response;
+                }).catch(() => {
+                    return cachedResponse || new Response('Offline - Image not cached');
                 });
             })
         );
@@ -70,10 +94,13 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then((response) => {
-                    return caches.open(RUNTIME_CACHE).then((cache) => {
-                        cache.put(request, response.clone());
-                        return response;
-                    });
+                    if (response.status === 200) {
+                        return caches.open(RUNTIME_CACHE).then((cache) => {
+                            cache.put(request, response.clone());
+                            return response;
+                        });
+                    }
+                    return response;
                 })
                 .catch(() => {
                     return caches.match(request);

@@ -123,6 +123,7 @@ function RecordContent() {
                     imageData: finalImageData,
                     location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
                     memo: sanitizedMemo || undefined,
+                    status: 'completed', // 完了ステータス
                     isPublic: false,
                 }),
             });
@@ -144,6 +145,7 @@ function RecordContent() {
                     imageData: finalImageData,
                     location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
                     memo: sanitizedMemo || undefined,
+                    status: 'completed', // 完了ステータス
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                 };
@@ -272,11 +274,54 @@ function RecordContent() {
                 </button>
 
                 <button
-                    onClick={() => router.push('/')}
+                    onClick={async () => {
+                        if (!userId || !mission) {
+                            router.push('/');
+                            return;
+                        }
+
+                        // キャンセルしたミッションを履歴として保存
+                        try {
+                            await fetch('/api/logs/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    userId,
+                                    missionId: mission.id,
+                                    missionText: mission.text,
+                                    status: 'cancelled',
+                                    isPublic: false,
+                                }),
+                            });
+
+                            // localStorage にもキャッシュ
+                            try {
+                                const log: UserLog = {
+                                    id: `cancelled_${Date.now()}`,
+                                    userId,
+                                    missionText: mission.text,
+                                    missionId: mission.id,
+                                    status: 'cancelled',
+                                    isPublic: false,
+                                    createdAt: new Date().toISOString(),
+                                };
+                                const logsString = localStorage.getItem('sanposhin_logs') || '[]';
+                                const logs = JSON.parse(logsString);
+                                logs.push(log);
+                                localStorage.setItem('sanposhin_logs', JSON.stringify(logs));
+                            } catch (storageError) {
+                                console.warn('localStorage へのキャッシュに失敗しました:', storageError);
+                            }
+                        } catch (error) {
+                            console.error('Failed to save cancelled mission:', error);
+                        }
+
+                        router.push('/');
+                    }}
                     className={styles.secondaryButton}
                     disabled={isSaving}
                 >
-                    キャンセル
+                    このお告げをキャンセルする
                 </button>
             </main>
         </div>
