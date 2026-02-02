@@ -47,9 +47,11 @@ cp .env.sample .env.local
 ```
 
 **必須の環境変数**:
+
 - Firebase クライアント設定 (`NEXT_PUBLIC_FIREBASE_*`)
 - Firebase Admin 設定 (`FIREBASE_ADMIN_*`) - サーバー側API用
 - Cloudinary 設定 (`NEXT_PUBLIC_CLOUDINARY_*`)
+- Gemini API キー (`AI_PROVIDER_API_KEY`) - AI ミッション生成用
 
 ※ `.env.sample` は環境変数名のみを示すテンプレートファイルです（値は空）
 
@@ -101,7 +103,15 @@ sanposhin-reborn/
     └── offline.html       # オフラインページ
 ```
 
-## 🔐 セキュリティ対策
+## � API Routes
+
+- **POST /api/auth/signup**: ユーザー登録（レート制限: 10/hour/IP）
+- **POST /api/auth/login**: ユーザーログイン（レート制限: 5/15min/IP+userId, 15分ロック）
+- **POST /api/logs/save**: ログ保存（レート制限: 100/hour/userId）
+- **POST /api/ai/mission**: AI ミッション生成（Gemini API、フォールバック対応）
+- **POST /api/cloudinary/delete**: ユーザーの Cloudinary 画像一括削除（アカウント削除時に使用）
+
+## �🔐 セキュリティ対策
 
 - **CSP（Content Security Policy）**: XSS攻撃の防止
 - **入力サニタイズ**: 制御文字除去、文字数制限

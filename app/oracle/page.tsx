@@ -27,7 +27,34 @@ export default function OraclePage() {
         generateNewMission();
     }, [router]);
 
-    const generateNewMission = () => {
+    const generateNewMission = async () => {
+        // AI生成を試みる
+        try {
+            const timeOfDay = new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening';
+            const response = await fetch('/api/ai/mission', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    context: {
+                        timeOfDay,
+                        weather: 'clear',
+                    },
+                }),
+            });
+
+            if (response.ok) {
+                const aiMission = await response.json();
+                setCurrentMission(aiMission);
+                setIsStarted(false);
+                setStartTime(null);
+                setElapsedMinutes(0);
+                return;
+            }
+        } catch (error) {
+            console.warn('AI生成に失敗、フォールバックを使用:', error);
+        }
+
+        // フォールバック: JSONから選択
         const missions = missionsData.missions as Mission[];
         const randomIndex = Math.floor(Math.random() * missions.length);
         setCurrentMission(missions[randomIndex]);

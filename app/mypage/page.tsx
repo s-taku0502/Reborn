@@ -228,10 +228,23 @@ export default function MyPage() {
         }
 
         try {
-            // Firestore からユーザーとすべてのログを削除
+            // 1. Cloudinary から画像を削除
+            try {
+                const cloudinaryResponse = await fetch('/api/cloudinary/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId }),
+                });
+                const cloudinaryData = await cloudinaryResponse.json();
+                console.log('Cloudinary削除結果:', cloudinaryData);
+            } catch (cloudinaryError) {
+                console.warn('Cloudinary画像削除に失敗しましたが続行します:', cloudinaryError);
+            }
+
+            // 2. Firestore からユーザーとすべてのログを削除
             await deleteUserAccount(userId);
 
-            // localStorage もクリア
+            // 3. localStorage もクリア
             localStorage.clear();
 
             showSuccessNotification('アカウントを完全に削除しました');
