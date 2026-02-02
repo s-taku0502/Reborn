@@ -321,7 +321,7 @@ function RecordContent() {
                     className={styles.secondaryButton}
                     disabled={isSaving}
                 >
-                    このお告げをキャンセルする
+                    ⟹ キャンセル
                 </button>
             </main>
         </div>
