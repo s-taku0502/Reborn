@@ -140,6 +140,17 @@ export default function OraclePage() {
                 <button onClick={handleRecord} className={styles.primaryButton}>
                     記録する
                 </button>
+
+                <button
+                    onClick={() => {
+                        setIsStarted(false);
+                        setStartTime(null);
+                        setElapsedMinutes(0);
+                    }}
+                    className={styles.secondaryButton}
+                >
+                    ⟹ 行動をキャンセルする
+                </button>
             </main>
         </div>
     );
