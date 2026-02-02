@@ -37,4 +37,8 @@ next-env.d.ts
 
 # personal settings
 requirements_definition.md
-*admin*.env.production
+*admin*
+.env.production
+
+# Firebase Admin service account
+*firebase-adminsdk*.json
