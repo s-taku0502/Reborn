@@ -10,16 +10,20 @@
 
 - 📜 **お告げ機能**: ランダムにミッションを受け取る
 - 📸 **写真撮影・保存**: お告げに従って行動し、写真で記録
-- 📚 **冒険の書（アルバム）**: 過去の記録を一覧・詳細表示
-- 👤 **ユーザー管理**: ID設定、バックアップ・復元機能
-- 💾 **ローカルストレージ**: オフライン対応
+- 📚 **冒険の書（アルバム）**: 過去の記録を一覧・詳細表示、個別削除
+- 👤 **ユーザー管理**: ID設定、ログイン、バックアップ・復元機能
+- 🔐 **セキュリティ**: サーバー側検証、レート制限、CSP対応
+- 💾 **データ管理**: Firestore（SSOT）+ LocalStorageキャッシュ
 
 ## 🛠 技術スタック
 
 - **フロントエンド**: Next.js 15 (App Router)
 - **言語**: TypeScript
 - **スタイリング**: CSS Modules
-- **データ管理**: LocalStorage（MVP）/ Firebase Firestore（拡張予定）
+- **データ管理**: Firebase Firestore (SSOT) + LocalStorageキャッシュ
+- **画像管理**: Cloudinary (動的変換・最適化)
+- **認証**: bcrypt + サーバー側検証 (API Routes)
+- **セキュリティ**: CSP, レート制限, 入力サニタイズ
 - **PWA**: Progressive Web App 対応
 
 ## 📦 セットアップ
@@ -34,13 +38,18 @@ yarn install
 pnpm install
 ```
 
-### 環境変数の設定（オプション）
+### 環境変数の設定
 
-Firebase を使用する場合は、`.env.sample` を `.env.local` にコピーして設定してください。
+Firebase と Cloudinary を使用するため、`.env.sample` を `.env.local` にコピーして設定してください。
 
 ```bash
 cp .env.sample .env.local
 ```
+
+**必須の環境変数**:
+- Firebase クライアント設定 (`NEXT_PUBLIC_FIREBASE_*`)
+- Firebase Admin 設定 (`FIREBASE_ADMIN_*`) - サーバー側API用
+- Cloudinary 設定 (`NEXT_PUBLIC_CLOUDINARY_*`)
 
 ※ `.env.sample` は環境変数名のみを示すテンプレートファイルです（値は空）
 
@@ -69,8 +78,11 @@ pnpm dev
 ```
 sanposhin-reborn/
 ├── app/                    # Next.js App Router
+│   ├── api/               # サーバー側API Routes
+│   │   ├── auth/         # 認証 (signup, login)
+│   │   └── logs/         # ログ保存
 │   ├── page.tsx           # ホーム画面
-│   ├── setup/             # 初期設定画面
+│   ├── setup/             # 初期設定・ログイン画面
 │   ├── oracle/            # お告げ表示画面
 │   ├── record/            # 記録保存画面
 │   ├── album/             # アルバム画面
@@ -79,11 +91,27 @@ sanposhin-reborn/
 │   └── missions.json      # お告げマスターデータ
 ├── lib/                   # ユーティリティ
 │   ├── types.ts          # 型定義
-│   └── firebase.ts       # Firebase設定
+│   ├── firebase.ts       # Firebase クライアント設定
+│   ├── firebase-admin.ts # Firebase Admin 設定
+│   ├── validation.ts     # 入力検証・サニタイズ
+│   ├── cloudinary.ts     # 画像アップロード
+│   └── errorHandler.ts   # エラーハンドリング・モーダル
 └── public/                # 静的ファイル
     ├── manifest.json      # PWA manifest
     └── offline.html       # オフラインページ
 ```
+
+## 🔐 セキュリティ対策
+
+- **CSP（Content Security Policy）**: XSS攻撃の防止
+- **入力サニタイズ**: 制御文字除去、文字数制限
+- **レート制限**:
+  - ログイン: 5回失敗で15分ロック（IP+ユーザーID単位）
+  - サインアップ: 1時間に10回まで（IP単位）
+  - ログ保存: 1時間に100回まで（ユーザー単位）
+- **サーバー側検証**: 認証・保存は全てAPI Routes経由
+- **パスワードハッシュ化**: bcrypt (salt=10)
+- **画像URL検証**: Cloudinary許可ドメインのみ表示
 
 ## 🎨 デザイン原則
 
@@ -93,12 +121,11 @@ sanposhin-reborn/
 
 ## 🔮 今後の拡張予定
 
-- Firebase Firestore との連携
-- Cloudinary による画像管理
 - AI によるパーソナライズされたお告げ生成
 - ソーシャル機能（フォロー・公開範囲設定）
-- 位置情報の活用
+- より高度な位置情報の活用
 - 時間帯・天候に応じたお告げ変化
+- プッシュ通知
 
 ## 📄 ライセンス
 

@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mission, UserLog } from '@/lib/types';
-import { saveLogToFirestore } from '@/lib/firestore';
 import { getErrorMessage, showErrorNotification, checkImageSize } from '@/lib/errorHandler';
 import { isCloudinaryConfigured, uploadImageFile } from '@/lib/cloudinary';
 import { MAX_LOCATION_LENGTH, MAX_MEMO_LENGTH, sanitizeTextInput, validateLocation, validateMemo } from '@/lib/validation';
@@ -112,31 +111,48 @@ function RecordContent() {
                 finalImageData = imageData || undefined;
             }
 
-            // ログデータの作成
-            const log: UserLog = {
-                userId,
-                missionText: mission.text,
-                missionId: mission.id,
-                imageUrl: finalImageUrl,
-                imageData: finalImageData,
-                location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
-                memo: sanitizedMemo || undefined,
-                isPublic: false,
-                createdAt: new Date().toISOString(),
-            };
+            // サーバーAPIでログ保存
+            const response = await fetch('/api/logs/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    missionId: mission.id,
+                    missionText: mission.text,
+                    imageUrl: finalImageUrl,
+                    imageData: finalImageData,
+                    location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
+                    memo: sanitizedMemo || undefined,
+                    isPublic: false,
+                }),
+            });
 
-            // Firestore に保存（SSOT）
-            await saveLogToFirestore(userId, log);
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.message || '保存に失敗しました');
+            }
 
             // localStorage にもキャッシュ（オフライン対応）
             try {
+                const log: UserLog = {
+                    id: data.logId,
+                    userId,
+                    missionText: mission.text,
+                    missionId: mission.id,
+                    imageUrl: finalImageUrl,
+                    imageData: finalImageData,
+                    location: sanitizedLocation ? { name: sanitizedLocation } : undefined,
+                    memo: sanitizedMemo || undefined,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                };
                 const logsString = localStorage.getItem('sanposhin_logs') || '[]';
                 const logs = JSON.parse(logsString);
                 logs.push(log);
                 localStorage.setItem('sanposhin_logs', JSON.stringify(logs));
             } catch (storageError) {
                 console.warn('localStorage へのキャッシュに失敗しました:', storageError);
-                // Firestore への保存は成功しているので続行
             }
 
             setUploadMessage('記録を保存しました');

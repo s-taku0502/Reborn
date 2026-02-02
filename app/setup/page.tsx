@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { validateUserId, validatePassword } from '@/lib/validation';
-import { hashPassword, savePasswordHash } from '@/lib/password';
-import { checkUserIdExists, createUser } from '@/lib/firestore';
+import { savePasswordHash } from '@/lib/password';
 import styles from './setup.module.css';
 
 export default function SetupPage() {
@@ -175,19 +174,31 @@ export default function SetupPage() {
         setIsLoading(true);
 
         try {
-            // 1. ユーザーID重複チェック (Firestore)
-            const exists = await checkUserIdExists(userId);
-            if (exists) {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, password }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (response.status === 429) {
+                setError('サインアップ試行回数が多すぎます。しばらくしてからお試しください。');
+                setIsLoading(false);
+                return;
+            }
+
+            if (response.status === 409 || data.code === 'USER_EXISTS') {
                 setError('このユーザーIDはすでに使用されています');
                 setIsLoading(false);
                 return;
             }
 
-            // 2. パスワードハッシュ化
-            const hash = await hashPassword(password);
-
-            // 3. Firestore にユーザー作成
-            await createUser(userId, hash);
+            if (!response.ok || !data.ok) {
+                setError(data.message || '登録中にエラーが発生しました');
+                setIsLoading(false);
+                return;
+            }
 
             // 4. localStorage にも保存（キャッシュ）
             await savePasswordHash(password);
@@ -199,11 +210,7 @@ export default function SetupPage() {
             router.push('/');
         } catch (err) {
             console.error('Registration error:', err);
-            if (err instanceof Error && err.message.includes('ネットワーク')) {
-                setError('ネットワーク接続を確認してください');
-            } else {
-                setError('登録中にエラーが発生しました。しばらくしてから再度お試しください。');
-            }
+            setError('登録中にエラーが発生しました。しばらくしてから再度お試しください。');
         } finally {
             setIsLoading(false);
         }

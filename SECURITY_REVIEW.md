@@ -20,6 +20,7 @@
 
 - **セキュリティヘッダー + CSP** を追加
   - `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`
+  - 本番環境では `unsafe-eval` を無効化
 - **メモ/場所の入力サニタイズ + 文字数制限**
   - 制御文字除去 + 50/200文字制限
   - 保存前にバリデーションを実施
@@ -30,14 +31,24 @@
   - `/api/auth/login` で検証し、Cloud Firestore のユーザー情報を参照
   - IP+ユーザーID単位で失敗回数をカウント（15分ウィンドウ）
   - 5回失敗で15分ロック（429）
+- **サーバー側サインアップAPI + レート制限**
+  - `/api/auth/signup` でユーザー登録を検証
+  - IP単位で1時間に10回まで（429）
+- **サーバー側ログ保存API + レート制限**
+  - `/api/logs/save` でログ保存を検証
+  - ユーザー単位で1時間に100回まで（429）
+  - 入力サニタイズ（memo, location）
+- **画像URLの許可リスト化**
+  - `res.cloudinary.com` + 自分の `cloudName` + `sanposhin/{userId}` のみ許可
+  - 不正URLは表示をブロック
 
 ## 4. 追加で推奨される改善（次段階）
 
-- **CSPの厳格化**（`unsafe-inline` / `unsafe-eval` を段階的に撤廃）
-- **画像URLの許可ドメイン制限の明文化**
-- **ログイン/復元のレート制限強化**（IP/時間ベース）
-- **サーバー側での検証導入**（API Route 経由で検証と保存）
-- **SRI/依存パッケージ監査**（`npm audit` の定期実行）
+- **CSPの段階的厳格化**（`unsafe-inline` を nonce/hash に置き換え）
+- **依存パッケージ監査**（`npm audit` の定期実行、Dependabot導入）
+- **HTTPSの強制**（本番環境での HSTS 設定）
+- **Cloudinary削除APIの実装**（アカウント削除時の画像一括削除）
+- **ログ監視・異常検知**（大量保存・異常ログインの検知）
 
 ## 5. 影響範囲と確認ポイント
 
